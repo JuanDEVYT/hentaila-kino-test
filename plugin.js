@@ -1165,10 +1165,11 @@ export async function screen({ state }) {
             : "Explora el catalogo o busca un titulo.",
           style: "caption"
         }]),
-    ...rows.map(row => ({
+    ...rows.map((row, index) => ({
       type: "titleRail",
       title: row.title,
-      items: row.items
+      items: row.items,
+      ...(index === 0 ? { autofocus: true } : {})
     }))
   ];
 
