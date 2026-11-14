@@ -1156,7 +1156,14 @@ export async function screen({ state }) {
     ...(results.length
       ? [
           { type: "Text", text: "Resultados", style: "h3" },
-          { type: "titleGrid", items: results, columns: 3 }
+          {
+            type: "titleCard",
+            key: "search-first",
+            item: results[0]
+          },
+          ...(results.length > 1
+            ? [{ type: "titleGrid", items: results.slice(1), columns: 3 }]
+            : [])
         ]
       : [{
           type: "Text",
@@ -1165,12 +1172,31 @@ export async function screen({ state }) {
             : "Explora el catalogo o busca un titulo.",
           style: "caption"
         }]),
-    ...rows.map((row, index) => ({
-      type: "titleRail",
-      title: row.title,
-      items: row.items,
-      ...(index === 0 ? { autofocus: true } : {})
-    }))
+    ...rows.flatMap((row, index) => {
+      if (index === 0 && row.items && row.items.length) {
+        return [
+          {
+            type: "titleCard",
+            key: "home-first",
+            item: row.items[0],
+            autofocus: true
+          },
+          ...(row.items.length > 1
+            ? [{
+                type: "titleRail",
+                title: row.title,
+                items: row.items.slice(1)
+              }]
+            : [])
+        ];
+      }
+
+      return [{
+        type: "titleRail",
+        title: row.title,
+        items: row.items
+      }];
+    })
   ];
 
   return {
@@ -1186,8 +1212,19 @@ export async function screen({ state }) {
     ]
   };
 }
+
 export async function screenEvent({ name, value, state }) {
-  if (name === "typed") return { state: { ...state, query: value || "" } };
+  if (name === "open") {
+    return {
+      focus: state.searched && state.results?.length
+        ? "search-first"
+        : "home-first"
+    };
+  }
+
+  if (name === "typed") {
+    return { state: { ...state, query: value || "" } };
+  }
 
   if (name === "search") {
     const query = String(state.query || "").trim();
@@ -1195,13 +1232,19 @@ export async function screenEvent({ name, value, state }) {
 
     try {
       const results = await search({ q: query });
-      return { state: { ...state, query, results: Array.isArray(results) ? results : [], searched: true } };
+      const found = Array.isArray(results) ? results : [];
+
+      return {
+        state: { ...state, query, results: found, searched: true },
+        ...(found.length ? { focus: "search-first" } : {})
+      };
     } catch {
-      return { state: { ...state, results: [], searched: true }, toast: "No se pudo completar la busqueda." };
+      return {
+        state: { ...state, results: [], searched: true },
+        toast: "No se pudo completar la busqueda."
+      };
     }
   }
+
   return null;
 }
-
-
-
