@@ -1130,17 +1130,14 @@ try {
 
 }
 
-export async function screen({ state = {} }) {
+export async function screen({ state }) {
   const results = Array.isArray(state.results) ? state.results : [];
-  const searching = state.searched === true;
   let rows = [];
 
-  if (!searching) {
-    try {
-      rows = await home();
-    } catch (e) {
-      log("Catalogo en pantalla fallido", e.message);
-    }
+  try {
+    rows = await home();
+  } catch (e) {
+    log("Catalogo en pantalla fallido", e.message);
   }
 
   const children = [
@@ -1155,77 +1152,52 @@ export async function screen({ state = {} }) {
       trailingIcon: "search",
       trailingLabel: "Buscar",
       onTrailingTap: "search"
-    }
-  ];
-
-  if (searching) {
-    children.push({
-      type: "Text",
-      text: "Resultados",
-      style: "h3"
-    });
-
-    if (results.length) {
-      children.push({
-        type: "grid",
-        columns: 3,
-        children: results.map((item, index) => ({
-          type: "titleCard",
-          key: index === 0 ? "search-first" : `search-${index}`,
-          item,
-          size: "medium",
-          ...(index === 0 ? { autofocus: true } : {})
-        }))
-      });
-    } else {
-      children.push({
-        type: "Text",
-        text: "No se encontraron resultados.",
-        style: "caption"
-      });
-    }
-  } else {
-    children.push({
-      type: "Text",
-      text: "Explora el catalogo o busca un titulo.",
-      style: "caption"
-    });
-
-    let homeFocusAssigned = false;
-
-    for (let rowIndex = 0; rowIndex < rows.length; rowIndex++) {
-      const row = rows[rowIndex];
-      const items = Array.isArray(row.items) ? row.items : [];
-
-      if (!items.length) continue;
-
-      children.push({
-        type: "Text",
-        text: row.title,
-        style: "h3"
-      });
-
-      children.push({
-        type: "scroll",
-        direction: "horizontal",
-        children: items.map((item, itemIndex) => {
-          const autofocus = !homeFocusAssigned;
-
-          if (autofocus) homeFocusAssigned = true;
-
-          return {
+    },
+    ...(results.length
+      ? [
+          { type: "Text", text: "Resultados", style: "h3" },
+          {
             type: "titleCard",
-            key: autofocus
-              ? "home-first"
-              : `home-${rowIndex}-${itemIndex}`,
-            item,
-            size: "medium",
-            ...(autofocus ? { autofocus: true } : {})
-          };
-        })
-      });
-    }
-  }
+            key: "search-first",
+            item: results[0]
+          },
+          ...(results.length > 1
+            ? [{ type: "titleGrid", items: results.slice(1), columns: 3 }]
+            : [])
+        ]
+      : [{
+          type: "Text",
+          text: state.searched
+            ? "No se encontraron resultados."
+            : "Explora el catalogo o busca un titulo.",
+          style: "caption"
+        }]),
+    ...rows.flatMap((row, index) => {
+      if (index === 0 && row.items && row.items.length) {
+        return [
+          {
+            type: "titleCard",
+            key: "home-first",
+            item: row.items[0],
+            autofocus: true
+          },
+          ...(row.items.length > 1
+            ? [{
+                type: "titleRail",
+                title: row.title,
+                items: row.items.slice(1)
+              }]
+            : [])
+        ];
+      }
+
+      return [{
+        type: "titleRail",
+        title: row.title,
+        items: row.items
+      }];
+    })
+  ];
 
   return {
     type: "scroll",
@@ -1241,7 +1213,7 @@ export async function screen({ state = {} }) {
   };
 }
 
-export async function screenEvent({ name, value, state = {} }) {
+export async function screenEvent({ name, value, state }) {
   if (name === "open") {
     return {
       focus: state.searched && state.results?.length
@@ -1251,46 +1223,24 @@ export async function screenEvent({ name, value, state = {} }) {
   }
 
   if (name === "typed") {
-    return {
-      state: {
-        ...state,
-        query: value || "",
-        results: [],
-        searched: false
-      }
-    };
+    return { state: { ...state, query: value || "" } };
   }
 
   if (name === "search") {
     const query = String(state.query || "").trim();
-
-    if (!query) {
-      return { toast: "Escribe un titulo para buscar." };
-    }
+    if (!query) return { toast: "Escribe un titulo para buscar." };
 
     try {
       const results = await search({ q: query });
       const found = Array.isArray(results) ? results : [];
 
       return {
-        state: {
-          ...state,
-          query,
-          results: found,
-          searched: true
-        },
+        state: { ...state, query, results: found, searched: true },
         ...(found.length ? { focus: "search-first" } : {})
       };
-    } catch (e) {
-      log("Error buscando titulos", e.message);
-
+    } catch {
       return {
-        state: {
-          ...state,
-          query,
-          results: [],
-          searched: true
-        },
+        state: { ...state, results: [], searched: true },
         toast: "No se pudo completar la busqueda."
       };
     }
