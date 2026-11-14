@@ -397,7 +397,7 @@ export async function home() {
   if (front) {
     push(
       "recientes",
-            msg("ReciÃ©n agregados", "Recently added"),
+            msg("Recien agregados", "Recently added"),
       catalogItems(parseCards(front, BASE + "/"))
     );
   }
@@ -413,7 +413,7 @@ export async function home() {
   if (seen) {
     push(
       "vistos",
-            msg("Los mÃ¡s vistos", "Most watched"),
+            msg("Los mas vistos", "Most watched"),
       catalogItems(parseCards(seen, BASE + "/"))
     );
   }
@@ -1173,13 +1173,18 @@ export async function screen({ state }) {
   ];
 
   return {
-    type: "Column",
-    padding: 16,
-    gap: 12,
-    children
+    type: "scroll",
+    direction: "vertical",
+    children: [
+      {
+        type: "Column",
+        padding: 16,
+        gap: 12,
+        children
+      }
+    ]
   };
 }
-
 export async function screenEvent({ name, value, state }) {
   if (name === "typed") return { state: { ...state, query: value || "" } };
 
