@@ -1159,7 +1159,8 @@ export async function screen({ state }) {
           {
             type: "titleCard",
             key: "search-first",
-            item: results[0]
+            item: results[0],
+            autofocus: true
           },
           ...(results.length > 1
             ? [{ type: "titleGrid", items: results.slice(1), columns: 3 }]
