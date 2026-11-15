@@ -1,4 +1,4 @@
-const BASE = "https://veohentai.com";
+﻿const BASE = "https://veohentai.com";
 const PLAYER = "https://hentaiplayer.com";
 const TIMEOUT = 12000;
 const MAX_ITEMS = 60;
@@ -1252,32 +1252,12 @@ export async function screen({ state = {} } = {}) {
           }]
         : []),
 
-    ...(section === "catalog"
-      ? rows.flatMap((row, index) => {
-          if (index === 0 && row.items && row.items.length) {
-            return [
-              {
-                type: "titleCard",
-                key: "home-first",
-                item: row.items[0],
-                autofocus: true
-              },
-              ...(row.items.length > 1
-                ? [{
-                    type: "titleRail",
-                    title: row.title,
-                    items: row.items.slice(1)
-                  }]
-                : [])
-            ];
-          }
-
-          return [{
-            type: "titleRail",
-            title: row.title,
-            items: row.items
-          }];
-        })
+    ...(section === "catalog" && !state.searched
+      ? rows.map(row => ({
+          type: "titleRail",
+          title: row.title,
+          items: row.items
+        }))
       : state.selectedGenre
         ? [
             {
@@ -1351,15 +1331,7 @@ export async function screen({ state = {} } = {}) {
 }
 
 export async function screenEvent({ name, value, arg, state = {} }) {
-  if (name === "open") {
-    return {
-      focus: state.searched && state.results?.length
-        ? "search-first"
-        : "home-first"
-    };
-  }
-
-  if (name === "open-search") {
+if (name === "open-search") {
     return {
       state: { ...state, searchOpen: true },
       focus: "query"
@@ -1452,12 +1424,22 @@ export async function screenEvent({ name, value, arg, state = {} }) {
       const found = Array.isArray(results) ? results : [];
 
       return {
-        state: { ...state, query, results: found, searched: true },
-        ...(found.length ? { focus: "search-first" } : {})
+        state: {
+          ...state,
+          searchOpen: false,
+          query,
+          results: found,
+          searched: true
+        }
       };
     } catch {
       return {
-        state: { ...state, results: [], searched: true },
+        state: {
+          ...state,
+          searchOpen: false,
+          results: [],
+          searched: true
+        },
         toast: "No se pudo completar la busqueda."
       };
     }
