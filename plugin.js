@@ -1232,17 +1232,10 @@ export async function screen({ state = {} } = {}) {
       ? [
           { type: "Text", text: "Resultados", style: "h3" },
           {
-            type: "titleCard",
-            key: "search-first",
-            item: results[0]
-          },
-          ...(results.length > 1
-            ? [{
-                type: "titleGrid",
-                items: results.slice(1),
-                columns: 3
-              }]
-            : [])
+            type: "titleGrid",
+            items: results,
+            columns: 3
+          }
         ]
       : state.searched
         ? [{
