@@ -1,4 +1,4 @@
-﻿const BASE = "https://veohentai.com";
+const BASE = "https://veohentai.com";
 const PLAYER = "https://hentaiplayer.com";
 const TIMEOUT = 12000;
 const MAX_ITEMS = 60;
@@ -726,8 +726,8 @@ async function fromVoe(url) {
 
   if (!idM) throw new Error("ID de VOE invÃ¡lido");
 
-  const pageUrl = "https://susanexpectcare.com/e/" + idM[1];
-  const html = await getText(pageUrl, "https://susanexpectcare.com/");
+  const pageUrl = "https://arianathankspecial.com/e/" + idM[1];
+  const html = await getText(pageUrl, "https://arianathankspecial.com/");
 
   const blobM =
     /<script type="application\/json">\s*(\[[\s\S]*?\])\s*<\/script>/i.exec(html);
