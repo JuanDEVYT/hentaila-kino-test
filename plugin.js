@@ -1238,7 +1238,8 @@ export async function screen({ state = {} } = {}) {
           {
             type: "titleGrid",
             items: results,
-            columns: 3
+            columns: 3,
+            size:"small"
           }
         ]
       : state.searched
@@ -1278,7 +1279,8 @@ export async function screen({ state = {} } = {}) {
                     ? [{
                         type: "titleGrid",
                         items: genreItems.slice(1),
-                        columns: 3
+                        columns: 3,
+                        size:"small"
                       }]
                     : [])
                 ]
