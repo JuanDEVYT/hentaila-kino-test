@@ -1269,27 +1269,7 @@ export async function screen({ state = {}, device = 'phone' } = {}) {
               text: state.selectedGenreTitle || "Género",
               style: "h3"
             },
-            ...(genreItems.length
-              ? [
-                  {
-                    type: "titleCard",
-                    key: "genre-first",
-                    item: genreItems[0]
-                  },
-                  ...(genreItems.length > 1
-                    ? [{
-                        type: "titleGrid",
-                        items: genreItems.slice(1),
-                        columns: gridColumns,
-                        size:"small"
-                      }]
-                    : [])
-                ]
-              : [{
-                  type: "Text",
-                  text: "Este género no tiene títulos disponibles.",
-                  style: "caption"
-                }]),
+            ...(genreItems.length ? [{ type: "titleGrid", items: genreItems, columns: gridColumns, size: "small" }] : [{ type: "Text", text: "Este género no tiene títulos disponibles.", style: "caption" }]),
             ...(state.genreHasMore ? [{ type: "button", label: "Cargar más", onTap: "genre-more" }] : [])
           ]
         : genres.length
@@ -1389,7 +1369,7 @@ if (name === "open-search") {
           genrePage: 1,
           genreHasMore: result.totalPages > 1
         },
-        ...(result.items.length ? { focus: "genre-first" } : {})
+        
       };
     } catch (e) {
       log("Carga de genero fallida", e.message);
