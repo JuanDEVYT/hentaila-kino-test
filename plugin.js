@@ -470,17 +470,21 @@ export async function getGenres() {
   return parseGenres(html);
 }
 
-export async function getGenreCatalog(slug) {
+async function getGenrePage(slug, page = 1) {
   const value = String(slug || "").trim();
-
-  if (!/^[a-z0-9-]+$/i.test(value)) {
-    throw new Error("Genero no valido");
-  }
-
-  const url = abs("/genero/" + value + "/");
+  if (!/^[a-z0-9-]+$/i.test(value)) throw new Error("Genero no valido");
+  const basePath = "/genero/" + value + "/";
+  const url = abs(page > 1 ? basePath + "page/" + page + "/" : basePath);
   const html = await getText(url, BASE + "/");
+  const items = catalogItems(parseCards(html, url));
+  const re = new RegExp("page/([0-9]+)/", "g");
+  const links = [...html.matchAll(re)];
+  const totalPages = Math.max(page, 1, ...links.map(x => Number(x[1])));
+  return { items, totalPages };
+}
 
-  return catalogItems(parseCards(html, url));
+export async function getGenreCatalog(slug, page = 1) {
+  return (await getGenrePage(slug, page)).items;
 }
 // ---- episodios --------------------------------------------------------------
 
@@ -1282,21 +1286,15 @@ export async function screen({ state = {} } = {}) {
                   type: "Text",
                   text: "Este género no tiene títulos disponibles.",
                   style: "caption"
-                }])
+                }]),
+            ...(state.genreHasMore ? [{ type: "button", label: "Cargar más", onTap: "genre-more" }] : [])
           ]
         : genres.length
           ? genres.map(genre => ({
               type: "listTile",
               key: "genre-" + genre.slug,
               title: genre.title,
-              ...(genre.poster
-                ? {
-                    leading: {
-                      type: "Image",
-                      url: genre.poster
-                    }
-                  }
-                : {}),
+
               onTap: "genre",
               arg: genre.slug
             }))
@@ -1375,7 +1373,7 @@ if (name === "open-search") {
     const slug = String(arg || "");
 
     try {
-      const items = await getGenreCatalog(slug);
+      const result = await getGenrePage(slug, 1);
       const selected = (state.genres || []).find(g => g.slug === slug);
 
       return {
@@ -1384,9 +1382,11 @@ if (name === "open-search") {
           section: "genres",
           selectedGenre: slug,
           selectedGenreTitle: selected?.title || slug,
-          genreItems: items
+          genreItems: result.items,
+          genrePage: 1,
+          genreHasMore: result.totalPages > 1
         },
-        ...(items.length ? { focus: "genre-first" } : {})
+        ...(result.items.length ? { focus: "genre-first" } : {})
       };
     } catch (e) {
       log("Carga de genero fallida", e.message);
@@ -1394,6 +1394,25 @@ if (name === "open-search") {
     }
   }
 
+  if (name === "genre-more") {
+    const slug = String(state.selectedGenre || "");
+    const page = Number(state.genrePage || 1) + 1;
+    try {
+      const result = await getGenrePage(slug, page);
+      const existing = Array.isArray(state.genreItems) ? state.genreItems : [];
+      const seen = new Set(existing.map(item => item.id || item.ref || item.title));
+      const added = result.items.filter(item => {
+        const key = item.id || item.ref || item.title;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+      return { state: { ...state, genreItems: [...existing, ...added], genrePage: page, genreHasMore: page < result.totalPages } };
+    } catch (e) {
+      log("Carga de mas titulos fallida", e.message);
+      return { toast: "No se pudieron cargar más títulos." };
+    }
+  }
   if (name === "back-genres") {
     return {
       state: {
