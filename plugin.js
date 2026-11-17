@@ -1183,7 +1183,8 @@ try {
 
 }
 
-export async function screen({ state = {} } = {}) {
+export async function screen({ state = {}, device = 'phone' } = {}) {
+  const gridColumns = device === 'tv' ? 5 : 3;
   const section = state.section === "genres" ? "genres" : "catalog";
   const results = Array.isArray(state.results) ? state.results : [];
   const genres = Array.isArray(state.genres) ? state.genres : [];
@@ -1238,7 +1239,7 @@ export async function screen({ state = {} } = {}) {
           {
             type: "titleGrid",
             items: results,
-            columns: 5,
+            columns: gridColumns,
             size:"small"
           }
         ]
@@ -1279,7 +1280,7 @@ export async function screen({ state = {} } = {}) {
                     ? [{
                         type: "titleGrid",
                         items: genreItems.slice(1),
-                        columns: 5,
+                        columns: gridColumns,
                         size:"small"
                       }]
                     : [])
